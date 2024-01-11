@@ -1,5 +1,6 @@
 package com.example.taskflow.services;
 
+import com.example.taskflow.dtos.StaticsDto;
 import com.example.taskflow.dtos.TagDto;
 import com.example.taskflow.dtos.UserDto;
 import com.example.taskflow.dtos.request.JetonRequestDto;
@@ -19,6 +20,8 @@ import com.example.taskflow.services.interfaces.TagService;
 import com.example.taskflow.services.interfaces.TaskService;
 import com.example.taskflow.services.interfaces.UserService;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import javax.xml.bind.ValidationException;
@@ -34,7 +37,6 @@ public class TaskServiceImp implements TaskService {
     TaskMapper taskMapper;
     TagMapper tagMapper;
     TagService tagService;
-
     JetonService jetonService;
 
     TaskServiceImp(TaskRepository taskRepository, TaskMapper taskMapper, TagMapper tagMapper, UserService userService, JetonService jetonService, TagService tagService) {
@@ -48,11 +50,7 @@ public class TaskServiceImp implements TaskService {
 
     public List<TaskResponseDto> getAll(){
         List<Task> tasks = this.taskRepository.findAll();
-        if(!tasks.isEmpty()){
-            List<TaskResponseDto> taskDtos = tasks.stream().map(t-> taskMapper.entityToResponseDto(t)).collect(Collectors.toList());
-            return taskDtos;
-        }
-        return null;
+        return tasksToDto(tasks);
     }
 
     public Task findById(Long id){
@@ -67,9 +65,12 @@ public class TaskServiceImp implements TaskService {
         if(task.getDebutDate().isBefore(today) || task.getDebutDate().isAfter(today.plusDays(3))){
             throw new ValidationException("Debut date should be max 3 days from now !");
         }
+        if(task.getDeadline().isBefore(task.getDebutDate())){
+            throw new ValidationException("Deadline must be after the debut date !");
+        }
         if(taskRequestDto.getAssigned_to_id()!=null){
             User assignedUser = this.userService.findById(taskRequestDto.getAssigned_to_id());
-            task.setAssingedTo(assignedUser);
+            task.setAssignedTo(assignedUser);
         }
         User creator = this.userService.findById(taskRequestDto.getCreated_by_id());
         task.setCreatedBy(creator);
@@ -97,7 +98,6 @@ public class TaskServiceImp implements TaskService {
             JetonRequestDto jetonRequestDto = new JetonRequestDto();
             jetonRequestDto.setTask_id(task.getId());
             jetonRequestDto.setType(JetonType.DELETE);
-            jetonRequestDto.setCreatedAt(LocalDate.now());
             jetonRequestDto.setUser_id(user_id);
             this.jetonService.save(jetonRequestDto) ;
         }
@@ -107,7 +107,6 @@ public class TaskServiceImp implements TaskService {
         JetonRequestDto jetonRequestDto = new JetonRequestDto();
         jetonRequestDto.setTask_id(task_id);
         jetonRequestDto.setType(JetonType.REPLACE);
-        jetonRequestDto.setCreatedAt(LocalDate.now());
         jetonRequestDto.setUser_id(user_id);
         this.jetonService.save(jetonRequestDto);
     }
@@ -117,11 +116,61 @@ public class TaskServiceImp implements TaskService {
         User user = this.userService.findById(user_id);
         User toUser = this.userService.findById(to_user_id);
         if( user.getRole().equals(Role.MANAGER) || user==toUser) {
-            task.setAssingedTo(toUser);
+            task.setAssignedTo(toUser);
             this.taskRepository.save(task);
         }else{
             throw new ValidationException("You don't have the permission for this method !");
         }
+    }
+
+    public StaticsDto statics(String  per, String value){
+        List<Object[]> result = null;
+        if(per.equals("tag")){
+            Tag tag = this.tagService.findByName(value);
+            result = this.taskRepository.taskCountByStatusByTag(tag);
+        }else if(per.equals("time")) {
+            result = this.taskRepository.taskCountByStatusByTime(value);
+        }
+        Long allCount = result.stream().mapToLong(o->(Long) o[1]).sum();
+        StaticsDto staticsDto = new StaticsDto();
+        result.stream().forEach( o->{
+            TaskStatus status = (TaskStatus) o[0];
+            Long count = (Long) o[1];
+            Long percentage = count*100/allCount;
+            if(status.equals(TaskStatus.DONE)) staticsDto.setDone_tasks(percentage + "%");
+            else if(status.equals(TaskStatus.TODO)) staticsDto.setTo_do_tasks(percentage + "%");
+            else if(status.equals(TaskStatus.INPROGRESS)) staticsDto.setIn_progress_tasks(percentage + "%");
+            else if(status.equals(TaskStatus.NEGLECTED)) staticsDto.setNeglected_tasks(percentage + "%");
+        });
+        return staticsDto;
+    }
+
+    public List<TaskResponseDto> getAllMyCreatedTasks(Long user_id){
+        User user = this.userService.findById(user_id);
+        List<Task> tasks = this.taskRepository.getTasksByCreatedBy(user);
+        return tasksToDto(tasks);
+    }
+
+    public List<TaskResponseDto> getAllMyAssignedTasks(Long user_id){
+        User user = this.userService.findById(user_id);
+        List<Task> tasks = this.taskRepository.getTasksByAssignedTo(user);
+        return tasksToDto(tasks);
+    }
+
+    public List<TaskResponseDto> tasksToDto(List<Task> tasks){
+        List<TaskResponseDto> taskDtos = tasks.stream().map(t-> taskMapper.entityToResponseDto(t)).collect(Collectors.toList());
+        return taskDtos;
+    }
+
+    @Scheduled(cron = "0 0 0 * * ?")
+    public void checkForNeglectedTasks(){
+        List<Task> tasks = this.taskRepository.findAll();
+        tasks.stream().forEach(t->{
+            if(LocalDate.now().isAfter(t.getDeadline())){
+                t.setStatus(TaskStatus.NEGLECTED);
+                this.taskRepository.save(t);
+            }
+        });
     }
 
 }

@@ -12,6 +12,7 @@
             </column>
             <column name="first_name" type="VARCHAR(255)"/>
             <column name="last_name" type="VARCHAR(255)"/>
+            <column name="replacement_jetons_num" type="BIGINT"/>
             <column name="role" type="SMALLINT"/>
         </createTable>
     </changeSet>

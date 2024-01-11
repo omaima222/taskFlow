@@ -1,11 +1,14 @@
 package com.example.taskflow.services;
 
 import com.example.taskflow.dtos.UserDto;
+import com.example.taskflow.dtos.response.TaskResponseDto;
 import com.example.taskflow.entities.User;
 import com.example.taskflow.mappers.interfaces.UserMapper;
 import com.example.taskflow.repositories.UserRepository;
+import com.example.taskflow.services.interfaces.TaskService;
 import com.example.taskflow.services.interfaces.UserService;
 import jakarta.persistence.EntityNotFoundException;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -45,6 +48,12 @@ public class UserServiceImp implements UserService {
     public void delete(Long id){
         User user = this.findById(id);
         this.userRepository.delete(user);
+    }
+
+    @Scheduled(cron = "0 0 0 * * ?")
+    public void updateReplacementJetonNum(){
+        List<User> users = this.userRepository.findAll();
+        users.stream().forEach(u->u.setReplacementJetonsNum(2L));
     }
 
 }

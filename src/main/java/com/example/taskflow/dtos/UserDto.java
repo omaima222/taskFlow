@@ -24,4 +24,6 @@ public class UserDto {
 
     @NotNull
     Role role;
+
+    Long replacementJetonsNum = 0L;
 }

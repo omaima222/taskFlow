@@ -22,6 +22,4 @@ public class JetonRequestDto {
     @NotNull
     JetonType type;
 
-    @NotNull
-    LocalDate createdAt;
 }

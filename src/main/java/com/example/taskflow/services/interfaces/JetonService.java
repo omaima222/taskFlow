@@ -12,4 +12,5 @@ public interface JetonService {
     Jeton findById(Long id);
     JetonResponseDto save(JetonRequestDto jetonRequestDto) throws ValidationException;
     void delete(Long id);
+    void handleDemand(Long id, Long user_id, Long to_user_id, String status) throws ValidationException;
 }

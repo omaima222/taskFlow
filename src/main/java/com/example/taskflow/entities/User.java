@@ -17,9 +17,10 @@ public class User {
     private Long id;
     private String firstName;
     private String lastName;
+    private Long replacementJetonsNum;
     private Role role;
 
-    @OneToMany(mappedBy = "assingedTo")
+    @OneToMany(mappedBy = "assignedTo")
     private List<Task> assignedTasks;
 
     @OneToMany(mappedBy = "createdBy")

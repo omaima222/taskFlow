@@ -14,6 +14,9 @@ import java.util.List;
 @Setter
 @Getter
 public class TaskRequestDto {
+
+    Long id;
+
     @NotNull
     @NotEmpty
     @NotBlank

@@ -1,6 +1,7 @@
 package com.example.taskflow.services.interfaces;
 
 import com.example.taskflow.dtos.UserDto;
+import com.example.taskflow.dtos.response.TaskResponseDto;
 import com.example.taskflow.entities.User;
 
 import java.util.List;

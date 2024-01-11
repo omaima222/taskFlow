@@ -2,6 +2,7 @@ package com.example.taskflow.dtos.response;
 
 import com.example.taskflow.dtos.TagDto;
 import com.example.taskflow.dtos.UserDto;
+import com.example.taskflow.entities.Tag;
 import com.example.taskflow.enums.TaskPriority;
 import com.example.taskflow.enums.TaskStatus;
 import jakarta.validation.constraints.NotBlank;
@@ -40,11 +41,11 @@ public class TaskResponseDto {
     @NotNull
     LocalDate deadline;
 
-//    @NotNull
-//    List<TagDto> tags;
-//
-//    @NotNull
-//    UserDto createdBy;
-//
-//    UserDto assignedTo;
+    @NotNull
+    List<TagDto> tags;
+
+    @NotNull
+    UserDto createdBy;
+
+    UserDto assignedTo;
 }

@@ -1,5 +1,6 @@
 package com.example.taskflow.controllers;
 
+import com.example.taskflow.dtos.IdsRequest;
 import com.example.taskflow.dtos.request.JetonRequestDto;
 import com.example.taskflow.dtos.response.JetonResponseDto;
 import com.example.taskflow.entities.Jeton;
@@ -39,4 +40,15 @@ public class JetonController {
     public void delete(@PathVariable Long id){
         this.jetonService.delete(id);
     }
+
+    @PostMapping("accept/{id}")
+    public void accept(@PathVariable Long id, @RequestBody @Valid IdsRequest idsRequest) throws ValidationException{
+        this.jetonService.handleDemand(id, idsRequest.getUser_id(), idsRequest.getTo_user_id(),  "accept");
+    }
+
+    @PostMapping("decline/{id}")
+    public void decline(@PathVariable Long id, @RequestBody @Valid IdsRequest idsRequest) throws ValidationException{
+        this.jetonService.handleDemand(id, idsRequest.getUser_id(), null, "decline");
+    }
+
 }
