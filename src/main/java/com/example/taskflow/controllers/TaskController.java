@@ -4,12 +4,11 @@ import com.example.taskflow.dtos.IdsRequest;
 import com.example.taskflow.dtos.StaticsDto;
 import com.example.taskflow.dtos.request.TaskRequestDto;
 import com.example.taskflow.dtos.response.TaskResponseDto;
-import com.example.taskflow.entities.Task;
 import com.example.taskflow.services.interfaces.TaskService;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import javax.xml.bind.ValidationException;
 import java.util.List;
 
 @RestController
@@ -23,11 +22,6 @@ public class TaskController {
           return this.taskService.getAll();
      }
 
-     @GetMapping("/{id}")
-     public Task findById(@PathVariable Long id){
-          return this.taskService.findById(id);
-     }
-
      @GetMapping("/{id}/my_created_tasks")
      public List<TaskResponseDto> getAllMyCreatedTasks(@PathVariable Long id){
           return taskService.getAllMyCreatedTasks(id);
@@ -38,31 +32,35 @@ public class TaskController {
           return taskService.getAllMyAssignedTasks(id);
      }
 
-
      @PostMapping("")
-     public Task add(@RequestBody @Valid TaskRequestDto taskRequestDto) throws ValidationException{
-           return this.taskService.save(taskRequestDto, null);
+     public ResponseEntity<String> add(@RequestBody @Valid TaskRequestDto taskRequestDto){
+          this.taskService.save(taskRequestDto, null);
+          return ResponseEntity.status(HttpStatus.CREATED).body("Task created successfully");
      }
 
      @PutMapping("/{id}")
-     public Task update(@RequestBody @Valid  TaskRequestDto taskRequestDto, @PathVariable Long id) throws ValidationException {
+     public ResponseEntity<String> update(@RequestBody @Valid  TaskRequestDto taskRequestDto, @PathVariable Long id){
           taskRequestDto.setId(id);
-          return this.taskService.save(taskRequestDto, id);
+          this.taskService.save(taskRequestDto, id);
+          return ResponseEntity.status(HttpStatus.OK).body("Task updated successfully");
      }
 
-     @DeleteMapping("/{id}")
-     public void delete(@PathVariable Long id, @RequestBody @Valid  IdsRequest idsRequest) throws ValidationException{
-          this.taskService.delete(id, idsRequest.getUser_id());
+     @DeleteMapping("/{id}/{userId}")
+     public ResponseEntity<String> delete(@PathVariable Long id,  @PathVariable Long userId){
+          this.taskService.delete(id, userId);
+          return ResponseEntity.status(HttpStatus.OK).body("Task deleted successfully");
      }
 
      @PostMapping("replace/{id}")
-     public void replace(@PathVariable Long id, @RequestBody @Valid IdsRequest idsRequest) throws ValidationException{
+     public ResponseEntity<String> replace(@PathVariable Long id, @RequestBody @Valid IdsRequest idsRequest){
           this.taskService.replace(id, idsRequest.getUser_id());
+          return ResponseEntity.status(HttpStatus.OK).body("Task replaced successfully");
      }
 
      @PostMapping("assign/{id}")
-     public void assign(@PathVariable Long id, @RequestBody @Valid IdsRequest idsRequest) throws ValidationException{
+     public ResponseEntity<String> assign(@PathVariable Long id, @RequestBody @Valid IdsRequest idsRequest){
           this.taskService.assign(id, idsRequest.getUser_id(), idsRequest.getTo_user_id());
+          return ResponseEntity.status(HttpStatus.OK).body("Task assigned successfully");
      }
 
      @GetMapping("/statics/{per}/{value}")

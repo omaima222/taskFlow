@@ -30,7 +30,7 @@ class TaskServiceImpTest {
 
 
     @Test
-    public void testAssign_ManagerAssignsTask_Successfully() throws ValidationException {
+     void testAssign_ManagerAssignsTask_Successfully() throws ValidationException {
         Long taskId = 1L;
         Long userId = 1L;
         Long toUserId = 2L;
@@ -56,7 +56,7 @@ class TaskServiceImpTest {
     }
 
     @Test
-    public void testAssign_UserAssignsTaskToHimself_Successfully() throws ValidationException {
+     void testAssign_UserAssignsTaskToHimself_Successfully() throws ValidationException {
         Long taskId = 1L;
         Long userId = 1L;
 
@@ -79,7 +79,7 @@ class TaskServiceImpTest {
     }
 
     @Test
-    public void testAssign_EmployeeAssignsTaskToSomeoneElse() throws ValidationException {
+     void testAssign_EmployeeAssignsTaskToSomeoneElse() throws ValidationException {
         Long taskId = 1L;
         Long userId = 1L;
         Long toUserId = 2L;

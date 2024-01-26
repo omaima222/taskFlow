@@ -2,7 +2,6 @@ package com.example.taskflow.services;
 
 import com.example.taskflow.dtos.StaticsDto;
 import com.example.taskflow.dtos.TagDto;
-import com.example.taskflow.dtos.UserDto;
 import com.example.taskflow.dtos.request.JetonRequestDto;
 import com.example.taskflow.dtos.request.TaskRequestDto;
 import com.example.taskflow.dtos.response.TaskResponseDto;
@@ -20,11 +19,9 @@ import com.example.taskflow.services.interfaces.TagService;
 import com.example.taskflow.services.interfaces.TaskService;
 import com.example.taskflow.services.interfaces.UserService;
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.persistence.criteria.CriteriaBuilder;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-
-import javax.xml.bind.ValidationException;
+import jakarta.validation.ValidationException;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -125,23 +122,25 @@ public class TaskServiceImp implements TaskService {
 
     public StaticsDto statics(String  per, String value){
         List<Object[]> result = null;
+        StaticsDto staticsDto = new StaticsDto();
         if(per.equals("tag")){
             Tag tag = this.tagService.findByName(value);
             result = this.taskRepository.taskCountByStatusByTag(tag);
         }else if(per.equals("time")) {
             result = this.taskRepository.taskCountByStatusByTime(value);
         }
-        Long allCount = result.stream().mapToLong(o->(Long) o[1]).sum();
-        StaticsDto staticsDto = new StaticsDto();
-        result.stream().forEach( o->{
-            TaskStatus status = (TaskStatus) o[0];
-            Long count = (Long) o[1];
-            Long percentage = count*100/allCount;
-            if(status.equals(TaskStatus.DONE)) staticsDto.setDone_tasks(percentage + "%");
-            else if(status.equals(TaskStatus.TODO)) staticsDto.setTo_do_tasks(percentage + "%");
-            else if(status.equals(TaskStatus.INPROGRESS)) staticsDto.setIn_progress_tasks(percentage + "%");
-            else if(status.equals(TaskStatus.NEGLECTED)) staticsDto.setNeglected_tasks(percentage + "%");
-        });
+        if(result!=null){
+            Long allCount = result.stream().mapToLong(o->(Long) o[1]).sum();
+            result.stream().forEach(o -> {
+                TaskStatus status = (TaskStatus) o[0];
+                Long count = (Long) o[1];
+                Long percentage = count * 100 / allCount;
+                if (status.equals(TaskStatus.DONE)) staticsDto.setDone_tasks(percentage + "%");
+                else if (status.equals(TaskStatus.TODO)) staticsDto.setTo_do_tasks(percentage + "%");
+                else if (status.equals(TaskStatus.INPROGRESS)) staticsDto.setIn_progress_tasks(percentage + "%");
+                else if (status.equals(TaskStatus.NEGLECTED)) staticsDto.setNeglected_tasks(percentage + "%");
+            });
+        }
         return staticsDto;
     }
 
@@ -162,13 +161,16 @@ public class TaskServiceImp implements TaskService {
         return taskDtos;
     }
 
-    @Scheduled(cron = "0 0 0 * * ?")
+    @Scheduled(cron= "0 0 0 * * ?")
     public void checkForNeglectedTasks(){
         List<Task> tasks = this.taskRepository.findAll();
         tasks.stream().forEach(t->{
-            if(LocalDate.now().isAfter(t.getDeadline())){
-                t.setStatus(TaskStatus.NEGLECTED);
-                this.taskRepository.save(t);
+            if(!t.getStatus().equals(TaskStatus.DONE)){
+                if(LocalDate.now().isAfter(t.getDeadline())){
+
+                    t.setStatus(TaskStatus.NEGLECTED);
+                    this.taskRepository.save(t);
+                }
             }
         });
     }

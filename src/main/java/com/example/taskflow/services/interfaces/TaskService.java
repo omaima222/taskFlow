@@ -4,8 +4,7 @@ import com.example.taskflow.dtos.StaticsDto;
 import com.example.taskflow.dtos.request.TaskRequestDto;
 import com.example.taskflow.dtos.response.TaskResponseDto;
 import com.example.taskflow.entities.Task;
-
-import javax.xml.bind.ValidationException;
+import jakarta.validation.ValidationException;
 import java.util.List;
 
 public interface TaskService {

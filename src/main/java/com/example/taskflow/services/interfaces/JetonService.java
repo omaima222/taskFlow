@@ -3,8 +3,7 @@ package com.example.taskflow.services.interfaces;
 import com.example.taskflow.dtos.request.JetonRequestDto;
 import com.example.taskflow.dtos.response.JetonResponseDto;
 import com.example.taskflow.entities.Jeton;
-
-import javax.xml.bind.ValidationException;
+import jakarta.validation.ValidationException;
 import java.util.List;
 
 public interface JetonService {

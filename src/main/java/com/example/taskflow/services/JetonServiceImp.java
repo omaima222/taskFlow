@@ -9,6 +9,7 @@ import com.example.taskflow.enums.JetonStatus;
 import com.example.taskflow.enums.JetonType;
 import com.example.taskflow.enums.Role;
 import com.example.taskflow.mappers.interfaces.JetonMapper;
+import com.example.taskflow.mappers.interfaces.UserMapper;
 import com.example.taskflow.repositories.JetonRepository;
 import com.example.taskflow.repositories.TaskRepository;
 import com.example.taskflow.services.interfaces.JetonService;
@@ -16,8 +17,7 @@ import com.example.taskflow.services.interfaces.UserService;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-
-import javax.xml.bind.ValidationException;
+import jakarta.validation.ValidationException;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -28,10 +28,13 @@ public class JetonServiceImp implements JetonService {
     JetonRepository jetonRepository;
     JetonMapper jetonMapper;
     UserService userService;
+
+    UserMapper userMapper;
     TaskRepository taskRepository;
 
-    JetonServiceImp(JetonRepository jetonRepository,TaskRepository taskRepository, JetonMapper jetonMapper, UserService userService) {
+    JetonServiceImp(JetonRepository jetonRepository, UserMapper userMapper, TaskRepository taskRepository, JetonMapper jetonMapper, UserService userService) {
         this.userService=userService;
+        this.userMapper=userMapper;
         this.jetonMapper=jetonMapper;
         this.jetonRepository=jetonRepository;
         this.taskRepository=taskRepository;
@@ -65,9 +68,10 @@ public class JetonServiceImp implements JetonService {
             }
             else throw new ValidationException("You already used your '1 delete jeton' for this month!");
         }else if(type.equals(JetonType.REPLACE)){
-            List<Jeton> existingJetons = this.jetonRepository.getJetonsByUserAndTypeAndCreatedAt(user, type, LocalDate.now());
-            if(existingJetons.size()<user.getReplacementJetonsNum()) {
+            if(user.getReplacementJetonsNum()>0) {
                  jeton.setTask(task.get());
+                 user.setReplacementJetonsNum(user.getReplacementJetonsNum()-1);
+                 this.userService.save(userMapper.entityToDto(user));
                  this.jetonRepository.save(jeton);
             }
             else throw new ValidationException("You already used your 'replacement jetons' for today!");
@@ -98,7 +102,7 @@ public class JetonServiceImp implements JetonService {
         }
     }
 
-    @Scheduled(cron = "0 0 0/12 * * ?")
+    @Scheduled(cron= "0 0/12 0 * * ?")
     public void checkForUnansweredReplacementDemands(){
         List<Jeton> jetons = this.jetonRepository.findAll();
         for(Jeton jeton : jetons){
@@ -106,6 +110,8 @@ public class JetonServiceImp implements JetonService {
                 if(jeton.getStatus()==null){
                     jeton.getUser().setReplacementJetonsNum(jeton.getUser().getReplacementJetonsNum()+1);
                     jeton.setStatus(JetonStatus.NEGLECTED);
+                    this.userService.save(userMapper.entityToDto(jeton.getUser()));
+                    this.jetonRepository.save(jeton);
                 }
             }
         }

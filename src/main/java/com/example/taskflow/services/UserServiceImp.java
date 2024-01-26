@@ -1,16 +1,13 @@
 package com.example.taskflow.services;
 
 import com.example.taskflow.dtos.UserDto;
-import com.example.taskflow.dtos.response.TaskResponseDto;
 import com.example.taskflow.entities.User;
 import com.example.taskflow.mappers.interfaces.UserMapper;
 import com.example.taskflow.repositories.UserRepository;
-import com.example.taskflow.services.interfaces.TaskService;
 import com.example.taskflow.services.interfaces.UserService;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
